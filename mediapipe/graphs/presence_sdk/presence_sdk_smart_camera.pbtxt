@@ -1,0 +1,35 @@
+# MediaPipe graph that performs hands tracking on desktop with TensorFlow
+# Lite on CPU.
+# Used in the example in
+# mediapipe/examples/desktop/hand_tracking:hand_tracking_cpu.
+
+# CPU image. (ImageFrame)
+input_stream: "input_video"
+
+# CPU image. (ImageFrame)
+output_stream: "output_video"
+
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "input_video"
+  input_stream: "FINISHED:output_video"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_input_video"
+}
+
+# Subgraph that detects faces.
+node {
+  calculator: "FaceDetectionShortRangeCpu"
+  input_stream: "IMAGE:throttled_input_video"
+  output_stream: "DETECTIONS:face_detections"
+}
+
+node {
+  calculator: "CropScaleSubGraph"
+  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "DETECTIONS:face_detections"
+  output_stream: "IMAGE:output_video"
+}

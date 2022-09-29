@@ -1,0 +1,50 @@
+type: "CropScaleSubGraph"
+
+# CPU image. (ImageFrame)
+input_stream: "IMAGE:throttled_input_video"
+
+# Rect coordinates
+input_stream: "DETECTIONS:face_detections"
+
+# CPU image. (ImageFrame)
+output_stream: "IMAGE:output_video"
+
+node {
+  calculator: "DetectionsToRectsCalculator"
+  input_stream: "DETECTIONS:face_detections"
+  output_stream: "NORM_RECT:detection_rect"
+}
+
+node {
+  calculator: "RectToCropCalculator"
+  input_stream: "NORM_RECT:detection_rect"
+  output_stream: "NORM_RECT:cropping_rect"
+  node_options {
+    [type.googleapis.com/mediapipe.RectToCropCalculatorOptions] {
+      crop_width: 0.5
+      crop_height: 0.5
+    }
+  }
+}
+
+node {
+  calculator: "ImageCroppingCalculator"
+  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "NORM_RECT:cropping_rect"
+  output_stream: "IMAGE:cropped_image"
+}
+
+node {
+  calculator: "ScaleImageCalculator"
+  input_stream: "FRAMES:cropped_image"
+  output_stream: "FRAMES:output_video"
+  node_options {
+    [type.googleapis.com/mediapipe.ScaleImageCalculatorOptions] {
+    target_width: 1280
+    target_height: 760
+    preserve_aspect_ratio: true
+    output_format: SRGB
+    algorithm: DEFAULT
+    }
+  }
+}
